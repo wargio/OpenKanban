@@ -1,0 +1,35 @@
+{
+    "types": [{
+        "color": "#000099",
+        "name": "Generic"
+    }, {
+        "color": "#996633",
+        "name": "Tickets"
+    }, {
+        "color": "#ff0000",
+        "name": "Critical"
+    }],
+    "lists": [{
+        "name": "Todo",
+        "tasks": []
+    }, {
+        "name": "Low Priority",
+        "tasks": []
+    }, {
+        "name": "In Progress",
+        "tasks": []
+    }, {
+        "name": "Waiting Feedback",
+        "tasks": []
+    }, {
+        "name": "Completed",
+        "tasks": []
+    }],
+    "bin": [],
+    "users": [
+        "USER1",
+        "USER2",
+        "USER3"
+    ],
+    "writable": false
+}

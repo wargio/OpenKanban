@@ -1,0 +1,347 @@
+body {
+    font-family: sans-serif;
+    font-size: 14px;
+    background-color: #069;
+    color: #fff;
+    margin: 0
+}
+.app-wrapper {
+}
+* {
+    box-sizing: border-box;
+}
+.hidden {
+    display: none;
+}
+.board {
+    overflow: auto;
+    padding: 20px;
+    display: flex;
+    flex: 1;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 118px;
+    bottom: 33px;
+    padding-right: 15px;
+}
+.list {
+    display: inline-block;
+    width: 250px;
+    flex: 0 0 250px;
+    vertical-align: top;
+    overflow: auto;
+    padding: 8px;
+    border-radius: 8px;
+    background: #f8f8f8;
+    margin-right: 15px;
+    margin-bottom: 10px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.4);
+}
+.card {
+    border-radius: 5px;
+    background: #fff;
+    border: 1px solid #ddd;
+    margin-bottom: 5px;
+    padding: 8px 10px;
+    -webkit-transition: all 0.3 ease;
+    color: #000
+}
+.card:hover {
+    opacity: 0.5;
+}
+.card.dragging {
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    -webkit-transform: rotate(-2deg);
+}
+.card-placeholder {
+    display: block;
+    height: 52px;
+    border: 1px dashed #ddd;
+    margin: 3px 0;
+    border-radius: 5px;
+}
+.listname {
+    margin: 0 0 10px;
+    font-size: 14px;
+    text-transform: uppercase;
+    color: #999;
+    padding: 5px;
+    border-bottom: 1px dashed #ddd;
+    text-overflow: ellipsis;
+    user-select: none;
+}
+.listname > span {
+    float: right;
+    font-weight: normal;
+    font-size: 13px;
+}
+
+.header {
+    padding: 20px;
+    height: 78px;
+    position: relative;
+    background-color: #09446b;
+}
+
+.logo {
+    margin: 0;
+    display: inline-block;
+}
+
+.logo small {
+    font-size: 9px;
+    font-weight: normal;
+    color: rgba(255,255,255,0.5);
+    display: block;
+    text-align: right;
+    letter-spacing: 1px;
+}
+
+.form-add-todo,
+.form-add-list {
+    padding: 10px 20px;
+    background: #ff0000;
+}
+
+.form-add-todo input,
+.form-add-list input {
+    margin-left: 10px;
+}
+
+.form-add-list {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    left: 0;
+}
+
+input[type=text] {
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 13px;
+}
+
+.total-card-counter {
+    display: inline-block;
+    margin: 0;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    position: absolute;
+    right: 0;
+    bottom: 15px;
+}
+
+.bin {
+    width: 32px;
+    height: 34px;
+    float: right;
+}
+
+.bin:hover {
+    opacity: 0.5;
+}
+
+.task-user {
+    color: #666699;
+    font-size : 10px;
+    float: left;
+    font-weight: bold;
+}
+
+.task-type {
+    font-size : 10px;
+    float: right;
+    font-weight: bold;
+}
+
+.filter-space {
+    background: #09446b;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    margin: 0px;
+    padding: 5px 20px 5px 20px;
+}
+
+.filter-name-selected {
+    display: inline-block;
+    flex: 0 0 250px;
+    vertical-align: top;
+    overflow: auto;
+    padding: 5px 10px 5px 10px;
+    border-radius: 5px;
+    background: #f8f8f8;
+    color: #666699;
+    float: left;
+    font-weight: bold;
+    font-size: 11px;
+    margin: 0px 0px 0px 5px;
+}
+.filter-name-deselected {
+    display: inline-block;
+    flex: 0 0 250px;
+    vertical-align: top;
+    overflow: auto;
+    padding: 5px 10px 5px 10px;
+    border-radius: 5px;
+    background: #909090;
+    color: #666699;
+    float: left;
+    font-weight: bold;
+    font-size: 11px;
+    margin: 0px 0px 0px 5px;
+}
+
+.button-app {
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 13px;
+}
+
+.button-app:hover {
+    opacity: 0.5;
+}
+
+.option-task {
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 13px;
+}
+
+.change-label {
+    font-size: 10px;
+}
+
+.logo-img {
+    width: 122px;
+    float: left;
+}
+
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-description {
+    width: 100%; 
+    height: 52px; 
+    resize: none;
+    border-radius: 4px;
+    border: solid 1px #ececec;
+    padding: 10px;
+}
+
+.modal-description:disabled {
+    background: #ffffff;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border-radius: 4px;
+    border: 1px solid #888;
+    width: 70%;
+    height: 90%;
+    color: #000000;
+    overflow: hidden;
+}
+
+.modal-content-user {
+    color: #666699;
+    font-size : 14px;
+    font-weight: bold;
+}
+
+.modal-content-type {
+    font-size : 14px;
+    font-weight: bold;
+}
+
+.modal-text-area {
+    width: 100%; 
+    height: 52px; 
+    resize: none;
+    border-radius: 4px;
+    border: solid 1px #ececec;
+    padding: 4px;
+}
+
+.modal-content-comments {
+    overflow-y: scroll;
+    border-radius: 4px;
+    border: solid 1px #ececec;
+    height: 60%;
+    overflow-x: hidden;
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+/* The Close Button */
+.close-cross {
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    top: -10px;
+    position: relative;
+}
+
+.close-cross:hover,
+.close-cross:focus {
+    color: #000000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-comment-cross {
+    color: #aaaaaa;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.modal-comment-cross:hover,
+.modal-comment-cross:focus {
+    color: #000000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+::-webkit-scrollbar {
+    width: 7px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: #f1f1f1;  
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #777; 
+    border-radius: 15px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #555; 
+}
