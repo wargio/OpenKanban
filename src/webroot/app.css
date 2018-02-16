@@ -221,6 +221,8 @@ input[type=text] {
 .logo-img {
     width: 122px;
     float: left;
+    position: relative;
+    top: -12px;
 }
 
 /* The Modal (background) */
@@ -334,7 +336,7 @@ input[type=text] {
 ::-webkit-scrollbar-track {
     background: #f1f1f1;  
 }
- 
+
 /* Handle */
 ::-webkit-scrollbar-thumb {
     background: #777; 
