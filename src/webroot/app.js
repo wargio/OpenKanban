@@ -153,6 +153,99 @@ Element.prototype.atIndex = function() {
         }, false);
     };
 
+    var ModalDialog = function(title, body, extra, ok_callback, cancel_callback) {
+        document.getElementById('modal-dialog-title-id').innerHTML = title;
+        document.getElementById('modal-dialog-body-id').innerHTML = body;
+        document.getElementById('modal-dialog-extra-id').innerHTML = '';
+        if (extra) {
+            document.getElementById('modal-dialog-extra-id').appendChild(extra);
+        }
+        ModalDialog.ok_callback = ok_callback;
+        ModalDialog.cancel_callback = cancel_callback;
+        if (!ok_callback) {
+            document.getElementById('modal-dialog-ok-id').style.display = 'none';
+        } else if (!cancel_callback) {
+            document.getElementById('modal-dialog-cancel-id').style.display = 'none';
+            document.getElementById('modal-dialog-ok-id').style.display = 'inline-block';
+        } else {
+            document.getElementById('modal-dialog-cancel-id').style.display = 'inline-block';
+            document.getElementById('modal-dialog-ok-id').style.display = 'inline-block';
+        }
+        ModalDialog.show();
+    };
+
+    ModalDialog.show = function() {
+        document.getElementById('modal-dialog').style.display = 'block';
+    };
+
+    ModalDialog.hide = function() {
+        document.getElementById('modal-dialog').style.display = 'none';
+    };
+
+    document.getElementById('modal-dialog-ok-id').onclick = function() {
+        if (typeof ModalDialog.ok_callback == 'function') {
+            ModalDialog.ok_callback();
+        }
+        ModalDialog.hide();
+    };
+
+    document.getElementById('modal-dialog-cancel-id').onclick = function() {
+        if (typeof ModalDialog.cancel_callback == 'function') {
+            ModalDialog.cancel_callback();
+        }
+        ModalDialog.hide();
+    };
+
+    // function adapterExample (array_value, is_innerhtml)
+    ModalDialog.Option = function(title, body, optionlist, adapter, ok_callback) {
+        var selector = document.createElement('select');
+        selector.style.width = '100%';
+        selector.className = 'option-task';
+        selector.id = 'modal-dialog-selector';
+        for (var i = 0; i < optionlist.length; i++) {
+            var option = document.createElement('option');
+            option.selected = (i == 0);
+            if (adapter) {
+                option.innerHTML = adapter(optionlist[i], true);
+                option.value = adapter(optionlist[i], false);
+            } else {
+                option.innerHTML = optionlist[i];
+                option.value = optionlist[i];
+            }
+            selector.appendChild(option);
+        }
+        ModalDialog.Option.ok_callback = ok_callback;
+        ModalDialog(title, body, selector, function() {
+            var selector = document.getElementById('modal-dialog-selector');
+            if (ModalDialog.Option.ok_callback) {
+                ModalDialog.Option.ok_callback(selector.value);
+            } else {
+                alert('INVALID CALLBACK');
+            }
+        }, true);
+    };
+
+    ModalDialog.Input = function(title, body, placeholder, ok_callback) {
+        var input = document.createElement('input');
+        input.id = 'modal-dialog-input';
+        input.type = 'text';
+        input.style.width = '100%';
+        input.placeholder = placeholder ? placeholder : '';
+        ModalDialog.Input.ok_callback = ok_callback;
+        ModalDialog(title, body, input, function() {
+            var input = document.getElementById('modal-dialog-input');
+            if (ModalDialog.Input.ok_callback) {
+                ModalDialog.Input.ok_callback(input.value);
+            } else {
+                alert('INVALID CALLBACK');
+            }
+        }, true);
+    };
+
+    ModalDialog.Message = function(title, body) {
+        ModalDialog(title, body, null, true, false);
+    };
+
     var AJAX = function(method, url, callback, body) {
         this.context = new XMLHttpRequest();
         var self = this.context;
@@ -178,6 +271,7 @@ Element.prototype.atIndex = function() {
 
     var Task = function(data, list, index) {
         this.name = data.name;
+        this.deadline = data.deadline;
         this.type = UI.taskType(data.type);
         this.description = data.description;
         this.creationTime = data.creation ? data.creation : now();
@@ -229,9 +323,21 @@ Element.prototype.atIndex = function() {
                 UI.modalShow(e.target.parentNode.self);
             };
             this.element.appendChild(span);
+            if (this.deadline) {
+                this.element.appendChild(document.createElement("br"));
+                span = document.createElement("span");
+                span.style.color = '#909090';
+                span.className = 'task-deadline';
+                span.innerHTML = 'Deadline: ' + decodeURIComponent(this.deadline);
+                span.ondblclick = function(e) {
+                    e.preventDefault();
+                    UI.modalShow(e.target.parentNode.self);
+                };
+                this.element.appendChild(span);
+            }
             this.element.appendChild(document.createElement("br"));
             span = document.createElement("span");
-            span.innerHTML = this.description;
+            span.innerHTML = decodeURIComponent(this.description);
             span.ondblclick = function(e) {
                 e.preventDefault();
                 UI.modalShow(e.target.parentNode.self);
@@ -259,6 +365,7 @@ Element.prototype.atIndex = function() {
             return {
                 type: this.type.name,
                 name: this.name,
+                deadline: this.deadline,
                 description: this.description,
                 creation: this.creationTime,
                 removed: this.removedTime,
@@ -283,7 +390,6 @@ Element.prototype.atIndex = function() {
             for (var i = 0; i < this.element.children.length; i++) {
                 var t = this.element.children[i].self;
                 if (t && !t.isplaceholder) {
-                    console.log(t.description);
                     t.list = this;
                     this.tasks.push(t);
                 }
@@ -389,13 +495,14 @@ Element.prototype.atIndex = function() {
         this.choosedFilter = null;
         this.adder.onsubmit = function(e) {
             e.preventDefault();
-            var description = this.todo_text.value.trim();
+            var description = encodeURIComponent(this.todo_text.value.trim());
             var name = this.todo_name.value.trim();
             var type = this.todo_type.value.trim();
+            var deadline = encodeURIComponent(this.todo_deadline.value.trim());
             if (description == '' || name == '' || type == '') {
                 return false;
             }
-            UI.addTask(name, description, type);
+            UI.addTask(name, description, deadline, type);
             UI.updateList();
             UI.updateUI();
             UI.poll();
@@ -418,11 +525,12 @@ Element.prototype.atIndex = function() {
             console.log('Cannot find: \'' + name + '\'');
             return null;
         };
-        this.addTask = function(name, description, type) {
+        this.addTask = function(name, description, deadline, type) {
             var l = this.lists[0];
             var t = new Task({
                 name: name,
                 description: description,
+                deadline: deadline,
                 type: type
             }, l, l.size());
             l.element.appendChild(t.element);
@@ -561,16 +669,43 @@ Element.prototype.atIndex = function() {
             var task = this.modalDiv.task;
             document.getElementById('modal-user-id').innerHTML = task.name;
             document.getElementById('modal-type-id').innerHTML = task.type.name;
+            document.getElementById('modal-deadline-id').innerHTML = task.deadline ? decodeURIComponent(task.deadline) : '---';
             document.getElementById('modal-type-id').style.color = task.type.color;
-            document.getElementById('modal-body-id').value = task.description;
+            document.getElementById('modal-body-id').value = decodeURIComponent(task.description);
             if (this.writable) {
                 document.getElementById('modal-comment-button-id').disabled = false;
                 document.getElementById('modal-comment-area-id').disabled = false;
                 document.getElementById('modal-body-id').disabled = false;
+                document.getElementById('modal-deadline-id').ondblclick = function() {
+                    /*
+                    var deadline = prompt("Please enter the new deadline", decodeURIComponent(UI.modalDiv.task.deadline));
+                    if (deadline != null) {
+                        UI.modalEditDeadline(deadline.trim());
+                    }
+                    */
+                    ModalDialog.Input("Edit Task Deadline", "Please enter the new deadline", decodeURIComponent(UI.modalDiv.task.deadline), function(newdeadline) {
+                        UI.modalEditDeadline(newdeadline.trim());
+                    });
+                };
+                document.getElementById('modal-user-id').ondblclick = function() {
+                    ModalDialog.Option("Edit Task User", "Please choose a new User to assign the Task", UI.users, null, function(newuser) {
+                        UI.modalEditName(newuser);
+                    });
+                };
+                document.getElementById('modal-type-id').ondblclick = function() {
+                    ModalDialog.Option("Edit Task User", "Please choose a new User to assign the Task", UI.types, function(v) {
+                        return v.name;
+                    }, function(newtype) {
+                        UI.modalEditType(newtype);
+                    });
+                };
             } else {
                 document.getElementById('modal-comment-button-id').disabled = true;
                 document.getElementById('modal-comment-area-id').disabled = true;
                 document.getElementById('modal-body-id').disabled = true;
+                document.getElementById('modal-deadline-id').ondblclick = null;
+                document.getElementById('modal-user-id').ondblclick = null;
+                document.getElementById('modal-type-id').ondblclick = null;
             }
             var modcom = document.getElementById('modal-comments-id');
             modcom.innerHTML = '';
@@ -590,29 +725,57 @@ Element.prototype.atIndex = function() {
                 div.appendChild(span);
                 div.appendChild(document.createElement('br'));
                 var span = document.createElement('span');
-                span.innerHTML = task.comments[i].comment.replace(/\n/g, '<br>');
+                span.innerHTML = decodeURIComponent(task.comments[i].comment).replace(/\n/g, '<br>');
                 div.appendChild(span);
                 modcom.appendChild(div);
                 modcom.appendChild(document.createElement('br'));
             }
         };
-        this.modalAddComment = function(x) {
+        this.modalEditDeadline = function(x) {
+            this.modalUpdateDescription();
             if (this.writable && !this.network) {
-                this.modalDiv.task.addComment(x);
+                this.modalDiv.task.deadline = encodeURIComponent(x);
+                this.modalReload();
+            }
+        };
+        this.modalEditName = function(x) {
+            this.modalUpdateDescription();
+            if (this.writable && !this.network) {
+                this.modalDiv.task.name = x;
+                this.modalReload();
+            }
+        };
+        this.modalEditType = function(x) {
+            this.modalUpdateDescription();
+            if (this.writable && !this.network) {
+                this.modalDiv.task.type = UI.taskType(x);
+                this.modalReload();
+            }
+        };
+        this.modalAddComment = function(x) {
+            this.modalUpdateDescription();
+            if (this.writable && !this.network) {
+                this.modalDiv.task.addComment(encodeURIComponent(x));
                 this.modalReload();
             }
         };
         this.modalRemoveComment = function(x) {
+            this.modalUpdateDescription();
             if (this.writable && !this.network) {
                 this.modalDiv.task.removeComment(x);
                 this.modalReload();
             }
         };
-        this.modalHide = function() {
-            var text = document.getElementById('modal-body-id').value;
-            if (text != this.modalDiv.task.description && confirm('Do you want to keep the new task description?')) {
-                this.modalDiv.task.description = text.trim();
+        this.modalUpdateDescription = function() {
+            if (this.writable && !this.network) {
+                var text = document.getElementById('modal-body-id').value.trim();
+                if (text != this.modalDiv.task.description && confirm('Do you want to keep the new task description?')) {
+                    this.modalDiv.task.description = encodeURIComponent(text);
+                }
             }
+        };
+        this.modalHide = function() {
+            this.modalUpdateDescription();
             this.modalDiv.style.display = 'none';
             document.getElementById('modal-comments-id').innerHTML = '';
             this.modalDiv.task = null;
@@ -726,7 +889,8 @@ Element.prototype.atIndex = function() {
             UI.write(false);
             UI.modified(false);
             UI.updateUI();
-            alert('Saved.\n\nPlease commit all changes.');
+            ModalDialog.Message('Saved', 'Please commit all changes.');
+            //alert('Saved.\n\nPlease commit all changes.');
         });
     };
 

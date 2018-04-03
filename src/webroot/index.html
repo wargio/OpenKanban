@@ -19,6 +19,7 @@
                 <select name="todo_name" id="todo_users" class="option-task"></select>
                 <!-- input type="text" autocomplete="off" name="todo_name" value="" placeholder="Name" / -->
                 <input type="text" autocomplete="off" name="todo_text" value="" placeholder="Description" />
+                <input type="text" autocomplete="off" name="todo_deadline" value="" placeholder="Deadline" />
                 <select name="todo_type" id="todo_types" class="option-task"></select>
                 <input type="submit" value="Add Task" class="button-app" />
                 <input type="button" value="Save changes" id="save-btn" class="button-app" style="float: right;" />
@@ -32,13 +33,24 @@
                     <span class="close-cross" id="modal-cross-id">&times;</span>
                     <span class="modal-content-user" id="modal-user-id">USER</span>&nbsp;
                     <span class="modal-content-type" id="modal-type-id">TYPE</span><br>
+                    <span class="modal-content-deadline">Deadline: </span><span class="modal-content-deadline modal-content-deadline" id="modal-deadline-id">DEADLINE</span><br>
                     <textarea class="modal-description" id="modal-body-id" >DESCRIPTION</textarea>
                     <div id="modal-user-comment">
-                        <textarea class="modal-text-area" id="modal-comment-area-id" ></textarea>
+                        <textarea placeholder="Write here a comment.." class="modal-text-area" id="modal-comment-area-id" ></textarea>
                         <input type="button" class="button-app" id="modal-comment-button-id" value="Add comment"/>
                     </div>
                     <br>
                     <div class="modal-content-comments" id="modal-comments-id"></div>
+                </div>
+            </div>
+            <div id="modal-dialog" class="modal">
+                <!-- Modal content -->
+                <div class="modal-dialog-content">
+                    <span class="modal-dialog-title" id="modal-dialog-title-id">TITLE</span><br>
+                    <div class="modal-dialog-body" id="modal-dialog-body-id">BODY</div><br>
+                    <div id="modal-dialog-extra-id">EXTRA</div><br>
+                    <input type="button" class="button-app" id="modal-dialog-ok-id" value="Ok"/>
+                    <input type="button" class="button-app" id="modal-dialog-cancel-id" value="Cancel"/>
                 </div>
             </div>
         </div>
