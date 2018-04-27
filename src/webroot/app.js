@@ -153,14 +153,16 @@ Element.prototype.atIndex = function() {
         }, false);
     };
 
-    var ModalDialog = function(title, body, extra, ok_callback, cancel_callback) {
+    var ModalDialog = function(title, body, extra, ok_callback, ok_data, cancel_callback, cancel_data) {
         document.getElementById('modal-dialog-title-id').innerHTML = title;
         document.getElementById('modal-dialog-body-id').innerHTML = body;
         document.getElementById('modal-dialog-extra-id').innerHTML = '';
         if (extra) {
             document.getElementById('modal-dialog-extra-id').appendChild(extra);
         }
+        ModalDialog.ok_data = ok_data;
         ModalDialog.ok_callback = ok_callback;
+        ModalDialog.cancel_data = cancel_data;
         ModalDialog.cancel_callback = cancel_callback;
         if (!ok_callback) {
             document.getElementById('modal-dialog-ok-id').style.display = 'none';
@@ -184,14 +186,14 @@ Element.prototype.atIndex = function() {
 
     document.getElementById('modal-dialog-ok-id').onclick = function() {
         if (typeof ModalDialog.ok_callback == 'function') {
-            ModalDialog.ok_callback();
+            ModalDialog.ok_callback(ModalDialog.ok_data);
         }
         ModalDialog.hide();
     };
 
     document.getElementById('modal-dialog-cancel-id').onclick = function() {
         if (typeof ModalDialog.cancel_callback == 'function') {
-            ModalDialog.cancel_callback();
+            ModalDialog.cancel_callback(ModalDialog.cancel_data);
         }
         ModalDialog.hide();
     };
@@ -222,7 +224,7 @@ Element.prototype.atIndex = function() {
             } else {
                 alert('INVALID CALLBACK');
             }
-        }, true);
+        }, null, true, null);
     };
 
     ModalDialog.Input = function(title, body, placeholder, ok_callback) {
@@ -239,11 +241,11 @@ Element.prototype.atIndex = function() {
             } else {
                 alert('INVALID CALLBACK');
             }
-        }, true);
+        }, null, true, null);
     };
 
     ModalDialog.Message = function(title, body) {
-        ModalDialog(title, body, null, true, false);
+        ModalDialog(title, body, null, true, null, false, null);
     };
 
     var AJAX = function(method, url, callback, body) {
@@ -510,12 +512,6 @@ Element.prototype.atIndex = function() {
             return false;
         };
         this.checkbox.kanban = this;
-        this.checkbox.onchange = function() {
-            if (!this.network) {
-                this.kanban.write(this.checked);
-                this.kanban.poll();
-            }
-        };
         this.taskType = function(name) {
             for (var i = 0; i < this.types.length; i++) {
                 if (this.types[i].name == name) {
@@ -570,7 +566,7 @@ Element.prototype.atIndex = function() {
             window.onbeforeunload = b ? function() {
                 return 'Are you sure you want to leave?\nAll changes will be lost.';
             } : null;
-            document.title = 'OpenKanban' + (b ? ' [modified]' : '');
+            document.title = 'Kanban Cybersecurity' + (b ? ' [modified]' : '');
         };
         this.updateList = function() {
             for (var i = 0; i < this.lists.length; i++) {
@@ -579,6 +575,14 @@ Element.prototype.atIndex = function() {
         };
         this.updateUI = function() {
             this.board.innerHTML = '';
+            this.checkbox.onchange = null
+            this.checkbox.checked = this.writable;
+            this.checkbox.onchange = function() {
+                if (!this.network) {
+                    this.kanban.write(this.checked);
+                    this.kanban.poll();
+                }
+            };
             this.adder.style.display = (this.writable ? "block" : "none");
             var n = 0;
             for (var i = 0; i < this.lists.length; i++) {
@@ -768,8 +772,9 @@ Element.prototype.atIndex = function() {
         };
         this.modalUpdateDescription = function() {
             if (this.writable && !this.network) {
+                var desc = decodeURIComponent(this.modalDiv.task.description);
                 var text = document.getElementById('modal-body-id').value.trim();
-                if (text != this.modalDiv.task.description && confirm('Do you want to keep the new task description?')) {
+                if (text != desc && confirm('Do you want to keep the new task description?')) {
                     this.modalDiv.task.description = encodeURIComponent(text);
                 }
             }
@@ -875,18 +880,14 @@ Element.prototype.atIndex = function() {
     function server_req(body, disableWrite) {
         var xhr = new AJAX(body ? "POST" : "GET", "/kanban", function(data) {
             UI.update(JSON.parse(data));
-            if (disableWrite) {
-                UI.write(false);
-            }
             UI.updateUI();
         }, body);
         UI.wait(true);
     }
 
     document.getElementById('save-btn').onclick = function() {
+        UI.write(false);
         var xhr = new AJAX("GET", "/save", function(data) {
-            UI.checkbox.checked = false;
-            UI.write(false);
             UI.modified(false);
             UI.updateUI();
             ModalDialog.Message('Saved', 'Please commit all changes.');
