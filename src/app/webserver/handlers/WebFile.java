@@ -5,8 +5,9 @@ import app.webserver.Firewall;
 import app.webserver.WebServer;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 
 public class WebFile implements HttpHandler {
 
@@ -58,10 +59,16 @@ public class WebFile implements HttpHandler {
             }
         }
         he.getResponseHeaders().add("Content-Type", type);
-        he.sendResponseHeaders(code, response.length());
+        byte[] bytes = response.getBytes();
+        he.sendResponseHeaders(code, bytes.length);
         try {
-            OutputStream out = he.getResponseBody();
-            out.write(response.getBytes());
+            BufferedOutputStream out = new BufferedOutputStream(he.getResponseBody());
+            ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+            byte[] buffer = new byte[512];
+            int count;
+            while ((count = bis.read(buffer)) != -1) {
+                out.write(buffer, 0, count);
+            }
             out.flush();
             out.close();
         } catch (IOException ex) {
