@@ -566,7 +566,7 @@ Element.prototype.atIndex = function() {
             window.onbeforeunload = b ? function() {
                 return 'Are you sure you want to leave?\nAll changes will be lost.';
             } : null;
-            document.title = 'Kanban Cybersecurity' + (b ? ' [modified]' : '');
+            document.title = 'OpenKanban' + (b ? ' [modified]' : '');
         };
         this.updateList = function() {
             for (var i = 0; i < this.lists.length; i++) {
