@@ -252,8 +252,12 @@ Element.prototype.atIndex = function() {
         this.context = new XMLHttpRequest();
         var self = this.context;
         this.context.onreadystatechange = function() {
-            if (self.readyState == 4 && self.status == 200) {
-                if (callback) callback(self.responseText);
+            if (self.readyState == 4) {
+                if (self.status == 200) {
+                    if (callback) callback(self.responseText);
+                } else {
+                    ModalDialog.Message('Error ' + self.status, self.responseText);
+                }
             }
         };
         this.context.open(method, url, true);
@@ -275,6 +279,7 @@ Element.prototype.atIndex = function() {
         this.name = data.name;
         this.deadline = data.deadline;
         this.type = UI.taskType(data.type);
+        this.priority = UI.taskPriority(data.priority);
         this.description = data.description;
         this.creationTime = data.creation ? data.creation : now();
         this.removedTime = data.removed ? data.removed : 0;
@@ -311,6 +316,15 @@ Element.prototype.atIndex = function() {
             span.style.color = '#666699';
             span.className = 'task-user';
             span.innerHTML = this.name;
+            span.ondblclick = function(e) {
+                e.preventDefault();
+                UI.modalShow(e.target.parentNode.self);
+            };
+            this.element.appendChild(span);
+            span = document.createElement("span");
+            span.style.color = this.priority.color;
+            span.className = 'task-prio';
+            span.innerHTML = '&nbsp;' + this.priority.name;
             span.ondblclick = function(e) {
                 e.preventDefault();
                 UI.modalShow(e.target.parentNode.self);
@@ -366,6 +380,7 @@ Element.prototype.atIndex = function() {
         this.json = function() {
             return {
                 type: this.type.name,
+                priority: this.priority.name,
                 name: this.name,
                 deadline: this.deadline,
                 description: this.description,
@@ -479,19 +494,20 @@ Element.prototype.atIndex = function() {
 
     var Kanban = function() {
         this.dragging = false;
-        this.writable = false;
+        this.readOnly = false;
         this.network = false;
         this.placeholder = new Placeholder();
         this.users = [];
         this.lists = [];
         this.types = [];
+        this.priorities = [];
         this.bin = [];
         this.board = document.getElementById('board');
         this.counter = document.getElementById('totalCards');
-        this.checkbox = document.getElementById('writableBox');
         this.adder = document.getElementById('frmAddTodo');
         this.selectorUsers = document.getElementById('todo_users');
         this.selectorTypes = document.getElementById('todo_types');
+        this.selectorPrios = document.getElementById('todo_prios');
         this.modalDiv = document.getElementById('modal-id');
         this.filtersSpace = document.getElementById('filters-id');
         this.choosedFilter = null;
@@ -500,18 +516,18 @@ Element.prototype.atIndex = function() {
             var description = encodeURIComponent(this.todo_text.value.trim());
             var name = this.todo_name.value.trim();
             var type = this.todo_type.value.trim();
+            var priority = this.todo_prio.value.trim();
             var deadline = encodeURIComponent(this.todo_deadline.value.trim());
             if (description == '' || name == '' || type == '') {
                 return false;
             }
-            UI.addTask(name, description, deadline, type);
+            UI.addTask(name, description, deadline, type, priority);
             UI.updateList();
             UI.updateUI();
             UI.poll();
             this.reset();
             return false;
         };
-        this.checkbox.kanban = this;
         this.taskType = function(name) {
             for (var i = 0; i < this.types.length; i++) {
                 if (this.types[i].name == name) {
@@ -521,13 +537,23 @@ Element.prototype.atIndex = function() {
             console.log('Cannot find: \'' + name + '\'');
             return null;
         };
-        this.addTask = function(name, description, deadline, type) {
+        this.taskPriority = function(name) {
+            for (var i = 0; i < this.priorities.length; i++) {
+                if (this.priorities[i].name == name) {
+                    return this.priorities[i];
+                }
+            }
+            console.log('Cannot find: \'' + name + '\'');
+            return null;
+        };
+        this.addTask = function(name, description, deadline, type, priority) {
             var l = this.lists[0];
             var t = new Task({
                 name: name,
                 description: description,
                 deadline: deadline,
-                type: type
+                type: type,
+                priority: priority,
             }, l, l.size());
             l.element.appendChild(t.element);
         };
@@ -543,14 +569,18 @@ Element.prototype.atIndex = function() {
             this.lists = [];
             this.bin = [];
             this.types = [];
+            this.priorities = [];
             this.users = [];
+            this.readOnly = data.readOnly;
             List.index = 0;
-            this.write(data.writable);
             for (var i = 0; i < data.users.length; i++) {
                 this.users.push('' + data.users[i]);
             }
             for (var i = 0; i < data.types.length; i++) {
                 this.types.push(new Type(data.types[i]));
+            }
+            for (var i = 0; i < data.priorities.length; i++) {
+                this.priorities.push(new Type(data.priorities[i]));
             }
             for (var i = 0; i < data.lists.length; i++) {
                 var p = data.lists[i];
@@ -562,12 +592,6 @@ Element.prototype.atIndex = function() {
             }
             this.network = false;
         };
-        this.modified = function(b) {
-            window.onbeforeunload = b ? function() {
-                return 'Are you sure you want to leave?\nAll changes will be lost.';
-            } : null;
-            document.title = 'OpenKanban' + (b ? ' [modified]' : '');
-        };
         this.updateList = function() {
             for (var i = 0; i < this.lists.length; i++) {
                 this.lists[i].update();
@@ -575,15 +599,6 @@ Element.prototype.atIndex = function() {
         };
         this.updateUI = function() {
             this.board.innerHTML = '';
-            this.checkbox.onchange = null
-            this.checkbox.checked = this.writable;
-            this.checkbox.onchange = function() {
-                if (!this.network) {
-                    this.kanban.write(this.checked);
-                    this.kanban.poll();
-                }
-            };
-            this.adder.style.display = (this.writable ? "block" : "none");
             var n = 0;
             for (var i = 0; i < this.lists.length; i++) {
                 n += this.lists[i].size();
@@ -601,11 +616,22 @@ Element.prototype.atIndex = function() {
             this.selectorTypes.innerHTML = '';
             for (var i = 0; i < this.types.length; i++) {
                 var option = document.createElement('option');
-                option.selected = (i == 0);
+                option.style.color = this.types[i].color;
                 option.innerHTML = this.types[i].name;
+                option.selected = (i == 0);
                 option.value = this.types[i].name;
                 this.selectorTypes.appendChild(option);
             }
+            this.selectorPrios.innerHTML = '';
+            for (var i = 0; i < this.priorities.length; i++) {
+                var option = document.createElement('option');
+                option.style.color = this.priorities[i].color;
+                option.innerHTML = this.priorities[i].name;
+                option.selected = (i == 0);
+                option.value = this.priorities[i].name;
+                this.selectorPrios.appendChild(option);
+            }
+            this.adder.style.display = (!this.readOnly ? "block" : "none");
             this.filtersSpace.innerHTML = '';
             var span = document.createElement('span');
             span.innerHTML = 'Filters: ';
@@ -636,10 +662,10 @@ Element.prototype.atIndex = function() {
         };
         this.json = function() {
             var d = {
-                writable: this.writable,
                 lists: new Array(this.lists.length),
                 bin: new Array(this.bin.length),
                 types: new Array(this.types.length),
+                priorities: new Array(this.priorities.length),
                 users: new Array(this.users.length)
             };
             for (var i = 0; i < this.lists.length; i++) {
@@ -651,6 +677,9 @@ Element.prototype.atIndex = function() {
             for (var i = 0; i < this.types.length; i++) {
                 d.types[i] = this.types[i].json();
             }
+            for (var i = 0; i < this.priorities.length; i++) {
+                d.priorities[i] = this.priorities[i].json();
+            }
             for (var i = 0; i < this.users.length; i++) {
                 d.users[i] = '' + this.users[i];
             }
@@ -658,9 +687,6 @@ Element.prototype.atIndex = function() {
         };
         this.wait = function(b) {
             this.network = b ? true : false;
-        };
-        this.write = function(b) {
-            this.writable = b ? true : false;
         };
         this.modalShow = function(task) {
             if (task && !this.network) {
@@ -673,20 +699,16 @@ Element.prototype.atIndex = function() {
             var task = this.modalDiv.task;
             document.getElementById('modal-user-id').innerHTML = task.name;
             document.getElementById('modal-type-id').innerHTML = task.type.name;
+            document.getElementById('modal-prio-id').innerHTML = task.priority.name;
             document.getElementById('modal-deadline-id').innerHTML = task.deadline ? decodeURIComponent(task.deadline) : '---';
             document.getElementById('modal-type-id').style.color = task.type.color;
+            document.getElementById('modal-prio-id').style.color = task.priority.color;
             document.getElementById('modal-body-id').value = decodeURIComponent(task.description);
-            if (this.writable) {
+            if (!this.readOnly) {
                 document.getElementById('modal-comment-button-id').disabled = false;
                 document.getElementById('modal-comment-area-id').disabled = false;
                 document.getElementById('modal-body-id').disabled = false;
                 document.getElementById('modal-deadline-id').ondblclick = function() {
-                    /*
-                    var deadline = prompt("Please enter the new deadline", decodeURIComponent(UI.modalDiv.task.deadline));
-                    if (deadline != null) {
-                        UI.modalEditDeadline(deadline.trim());
-                    }
-                    */
                     ModalDialog.Input("Edit Task Deadline", "Please enter the new deadline", decodeURIComponent(UI.modalDiv.task.deadline), function(newdeadline) {
                         UI.modalEditDeadline(newdeadline.trim());
                     });
@@ -697,10 +719,17 @@ Element.prototype.atIndex = function() {
                     });
                 };
                 document.getElementById('modal-type-id').ondblclick = function() {
-                    ModalDialog.Option("Edit Task User", "Please choose a new User to assign the Task", UI.types, function(v) {
+                    ModalDialog.Option("Edit Task Type", "Please choose a new type to assign the Task", UI.types, function(v) {
                         return v.name;
                     }, function(newtype) {
                         UI.modalEditType(newtype);
+                    });
+                };
+                document.getElementById('modal-prio-id').ondblclick = function() {
+                    ModalDialog.Option("Edit Task Priority", "Please choose a new priority to assign the Task", UI.priorities, function(v) {
+                        return v.name;
+                    }, function(newprio) {
+                        UI.modalEditPriority(newprio);
                     });
                 };
             } else {
@@ -710,6 +739,7 @@ Element.prototype.atIndex = function() {
                 document.getElementById('modal-deadline-id').ondblclick = null;
                 document.getElementById('modal-user-id').ondblclick = null;
                 document.getElementById('modal-type-id').ondblclick = null;
+                document.getElementById('modal-prio-id').ondblclick = null;
             }
             var modcom = document.getElementById('modal-comments-id');
             modcom.innerHTML = '';
@@ -737,41 +767,48 @@ Element.prototype.atIndex = function() {
         };
         this.modalEditDeadline = function(x) {
             this.modalUpdateDescription();
-            if (this.writable && !this.network) {
+            if (!this.readOnly && !this.network) {
                 this.modalDiv.task.deadline = encodeURIComponent(x);
                 this.modalReload();
             }
         };
         this.modalEditName = function(x) {
             this.modalUpdateDescription();
-            if (this.writable && !this.network) {
+            if (!this.readOnly && !this.network) {
                 this.modalDiv.task.name = x;
                 this.modalReload();
             }
         };
         this.modalEditType = function(x) {
             this.modalUpdateDescription();
-            if (this.writable && !this.network) {
+            if (!this.readOnly && !this.network) {
                 this.modalDiv.task.type = UI.taskType(x);
+                this.modalReload();
+            }
+        };
+        this.modalEditPriority = function(x) {
+            this.modalUpdateDescription();
+            if (!this.readOnly && !this.network) {
+                this.modalDiv.task.priority = UI.taskPriority(x);
                 this.modalReload();
             }
         };
         this.modalAddComment = function(x) {
             this.modalUpdateDescription();
-            if (this.writable && !this.network) {
+            if (!this.readOnly && !this.network) {
                 this.modalDiv.task.addComment(encodeURIComponent(x));
                 this.modalReload();
             }
         };
         this.modalRemoveComment = function(x) {
             this.modalUpdateDescription();
-            if (this.writable && !this.network) {
+            if (!this.readOnly && !this.network) {
                 this.modalDiv.task.removeComment(x);
                 this.modalReload();
             }
         };
         this.modalUpdateDescription = function() {
-            if (this.writable && !this.network) {
+            if (!this.readOnly && !this.network) {
                 var desc = decodeURIComponent(this.modalDiv.task.description);
                 var text = document.getElementById('modal-body-id').value.trim();
                 if (text != desc && confirm('Do you want to keep the new task description?')) {
@@ -784,7 +821,7 @@ Element.prototype.atIndex = function() {
             this.modalDiv.style.display = 'none';
             document.getElementById('modal-comments-id').innerHTML = '';
             this.modalDiv.task = null;
-            if (this.writable) {
+            if (!this.readOnly) {
                 this.poll();
             }
         };
@@ -853,7 +890,7 @@ Element.prototype.atIndex = function() {
 
     live('drop', '.list, .list .card-placeholder', function(e) {
         e.preventDefault();
-        if (!UI.dragging || UI.network || !UI.writable) return false;
+        if (!UI.dragging || UI.network || UI.readOnly) return false;
         var task_id = e.dataTransfer.getData('text');
         var task = document.getElementById(task_id);
         if (this.className === 'list') {
@@ -861,7 +898,6 @@ Element.prototype.atIndex = function() {
         } else {
             this.parentNode.replaceChild(task, this);
         }
-        UI.modified(true);
         UI.updateList();
         UI.updateUI();
         UI.poll();
@@ -869,7 +905,7 @@ Element.prototype.atIndex = function() {
 
     live('drop', '.bin', function(e) {
         e.preventDefault();
-        if ( /*!UI.dragging ||*/ UI.network || !UI.writable) return false;
+        if ( /*!UI.dragging ||*/ UI.network || UI.readOnly) return false;
         var task_id = e.dataTransfer.getData('text');
         var task = document.getElementById(task_id);
         UI.trashTask(task.self);
@@ -884,16 +920,6 @@ Element.prototype.atIndex = function() {
         }, body);
         UI.wait(true);
     }
-
-    document.getElementById('save-btn').onclick = function() {
-        UI.write(false);
-        var xhr = new AJAX("GET", "/save", function(data) {
-            UI.modified(false);
-            UI.updateUI();
-            ModalDialog.Message('Saved', 'Please commit all changes.');
-            //alert('Saved.\n\nPlease commit all changes.');
-        });
-    };
 
     document.getElementById('modal-cross-id').onclick = function() {
         UI.modalHide();

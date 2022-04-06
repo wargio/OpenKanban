@@ -1,7 +1,7 @@
 body {
     font-family: sans-serif;
     font-size: 14px;
-    background-color: #069;
+    background-color: #008c9e;
     color: #fff;
     margin: 0
 }
@@ -27,8 +27,9 @@ body {
 }
 .list {
     display: inline-block;
-    width: 250px;
-    flex: 0 0 250px;
+    min-width: 250px;
+    max-width: 450px;
+    flex: 1 0 auto;
     vertical-align: top;
     overflow: auto;
     padding: 8px;
@@ -81,7 +82,7 @@ body {
     padding: 20px;
     height: 78px;
     position: relative;
-    background-color: #09446b;
+    background-color: #343838;
 }
 
 .logo {
@@ -101,7 +102,7 @@ body {
 .form-add-todo,
 .form-add-list {
     padding: 10px 20px;
-    background: #ff0000;
+    background: #005f6b;
 }
 
 .form-add-todo input,
@@ -157,6 +158,12 @@ input[type=text] {
     font-weight: bold;
 }
 
+.task-prio {
+    font-size : 10px;
+    float: right;
+    font-weight: bold;
+}
+
 .task-deadline {
     font-size : 10px;
     float: left;
@@ -164,7 +171,7 @@ input[type=text] {
 }
 
 .filter-space {
-    background: #09446b;
+    background: #343838;
     position: fixed;
     bottom: 0;
     right: 0;
@@ -279,6 +286,11 @@ input[type=text] {
 }
 
 .modal-content-type {
+    font-size : 14px;
+    font-weight: bold;
+}
+
+.modal-content-prio {
     font-size : 14px;
     font-weight: bold;
 }

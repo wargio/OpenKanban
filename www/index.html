@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width">
+        <title>Kanban</title>
+        <link rel="stylesheet" href="app.css"/>
+    </head>
+    <body>
+        <div class="app-wrapper">
+            <header class="header">
+                <h1 class="logo">Kanban</h1>
+                <p class="total-card-counter" id="totalCards"></p><br>
+            </header>
+            <form id="frmAddTodo" class="form-add-todo">
+                New Task:&nbsp;&nbsp;
+                <select name="todo_name" id="todo_users" class="option-task"></select>
+                <!-- input type="text" autocomplete="off" name="todo_name" value="" placeholder="Name" / -->
+                <input type="text" autocomplete="off" name="todo_text" value="" placeholder="Description" />
+                <input type="text" autocomplete="off" name="todo_deadline" value="" placeholder="Deadline" />&nbsp;&nbsp;&nbsp;&nbsp;
+                <select name="todo_type" id="todo_types" class="option-task"></select>&nbsp;&nbsp;&nbsp;&nbsp;
+                <select name="todo_prio" id="todo_prios" class="option-task"></select>
+                <input type="submit" value="Add Task" class="button-app" />
+                <image id="bin" class="bin" src="bin.png" alt="">
+            </form>
+            <div class="board" id="board"></div>
+            <div class="filter-space" id="filters-id"></div>
+            <div id="modal-id" class="modal">
+                <!-- Modal content -->
+                <div class="modal-content">
+                    <span class="close-cross" id="modal-cross-id">&times;</span>
+                    <span class="modal-content-user" id="modal-user-id">USER</span>&nbsp;
+                    <span class="modal-content-type" id="modal-type-id">TYPE</span>&nbsp;
+                    <span class="modal-content-prio" id="modal-prio-id">PRIO</span><br>
+                    <span class="modal-content-deadline">Deadline: </span><span class="modal-content-deadline modal-content-deadline" id="modal-deadline-id">DEADLINE</span><br>
+                    <textarea class="modal-description" id="modal-body-id" >DESCRIPTION</textarea>
+                    <div id="modal-user-comment">
+                        <textarea placeholder="Write here a comment.." class="modal-text-area" id="modal-comment-area-id" ></textarea>
+                        <input type="button" class="button-app" id="modal-comment-button-id" value="Add comment"/>
+                    </div>
+                    <br>
+                    <div class="modal-content-comments" id="modal-comments-id"></div>
+                </div>
+            </div>
+            <div id="modal-dialog" class="modal">
+                <!-- Modal content -->
+                <div class="modal-dialog-content">
+                    <span class="modal-dialog-title" id="modal-dialog-title-id">TITLE</span><br>
+                    <div class="modal-dialog-body" id="modal-dialog-body-id">BODY</div><br>
+                    <div id="modal-dialog-extra-id">EXTRA</div><br>
+                    <input type="button" class="button-app" id="modal-dialog-ok-id" value="Ok"/>
+                    <input type="button" class="button-app" id="modal-dialog-cancel-id" value="Cancel"/>
+                </div>
+            </div>
+        </div>
+        <script src="app.js"></script>
+    </body>
+</html>
