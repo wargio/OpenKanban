@@ -914,7 +914,7 @@ Element.prototype.atIndex = function() {
     });
 
     function server_req(body, disableWrite) {
-        var xhr = new AJAX(body ? "POST" : "GET", "/kanban", function(data) {
+        var xhr = new AJAX(body ? "POST" : "GET", "kanban", function(data) {
             UI.update(JSON.parse(data));
             UI.updateUI();
         }, body);
