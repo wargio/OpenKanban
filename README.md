@@ -18,9 +18,14 @@ Original webui code author: https://github.com/scazzy/kanban-board
 ## Building
 
 ```bash
-go get -v github.com/gin-gonic/gin
-go get -v github.com/jessevdk/go-assets-builder
-
-go-assets-builder -s /www -o assets.go www
+go mod download
 go build
+```
+
+## Updating the www files
+
+you will need to install [go-assets-builder](https://github.com/jessevdk/go-assets-builder)
+
+```bash
+go-assets-builder -s /www -o assets.go www
 ```
